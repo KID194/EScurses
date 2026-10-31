@@ -3,6 +3,7 @@ import os
 import time
 import atexit
 import ctypes
+import unicodedata
 
 if os.name == 'posix':
     import termios, tty, select
@@ -20,15 +21,42 @@ KEY_PGDN  = 'KEY_PGDN'
 KEY_DEL   = 'KEY_DEL'
 KEY_ESC   = 'KEY_ESC'
 
+COLOR_DEFAULT = None
+COLOR_BLACK   = 30
+COLOR_RED     = 31
+COLOR_GREEN   = 32
+COLOR_YELLOW  = 33
+COLOR_BLUE    = 34
+COLOR_MAGENTA = 35
+COLOR_CYAN    = 36
+COLOR_WHITE   = 37
+COLOR_BRIGHT_RED     = 91
+COLOR_BRIGHT_GREEN   = 92
+COLOR_BRIGHT_YELLOW  = 93
+COLOR_BRIGHT_BLUE    = 94
+COLOR_BRIGHT_MAGENTA = 95
+COLOR_BRIGHT_CYAN    = 96
+COLOR_BRIGHT_WHITE   = 97
+
 _screen = []
+_colors = []
 _screenWidth = None
 _screenHeight = None
+_dirtyRows = set()
 
 _frameStartTime = None
 
 _fd = None
 _oldSettings = None
 _terminalInited = False
+
+def _char_width(ch):
+    """字符在终端占用的列数:中文等全角字符为 2,组合字符为 0,其余为 1。"""
+    if not ch:
+        return 0
+    if unicodedata.combining(ch):
+        return 0
+    return 2 if unicodedata.east_asian_width(ch) in ('W', 'F') else 1
 
 def _enableWindowsVT():
     if os.name != 'nt':
@@ -85,11 +113,13 @@ def getTerminalSize():
     return (scrSize.columns, scrSize.lines)
 
 def initGame():
-    global _screenWidth, _screenHeight, _screen
+    global _screenWidth, _screenHeight, _screen, _colors, _dirtyRows
     _enableWindowsVT()
     scrSize = getTerminalSize()
     _screenWidth, _screenHeight = scrSize
     _screen = [[' '] * (_screenWidth - 1) for _ in range(_screenHeight)]
+    _colors = [[None] * (_screenWidth - 1) for _ in range(_screenHeight)]
+    _dirtyRows = set(range(1, _screenHeight + 1))
 
     if os.name == 'posix':
         _initTerminalPosix()
@@ -98,42 +128,90 @@ def initGame():
     sys.stdout.flush()
 
 def clear():
+    global _screen, _colors, _dirtyRows
     sys.stdout.write('\033[2J\033[H')
-    global _screen
     _screen = [[' '] * (_screenWidth - 1) for _ in range(_screenHeight)]
+    _colors = [[None] * (_screenWidth - 1) for _ in range(_screenHeight)]
+    _dirtyRows = set(range(1, _screenHeight + 1))
 
 def resize():
     initGame()
 
-def drawChar(x, y, char):
-    if not (1 <= x <= _screenWidth - 1 and 1 <= y <= _screenHeight):
-        return
+def drawChar(x, y, char, color=None):
     if not char:
         return
-    _screen[y - 1][x - 1] = char[0]
+    ch = char[0]
+    w = _char_width(ch)
+    if w == 0:
+        return
+    if not (1 <= x <= _screenWidth - 1 and 1 <= y <= _screenHeight):
+        return
+    if w == 2 and x + 1 > _screenWidth - 1:
+        return  # 右侧放不下全角字符
+    row = _screen[y - 1]
+    crow = _colors[y - 1]
+    # 目标格若为全角字符的占位格,先清掉左侧那个全角字符
+    if row[x - 1] == '' and x - 2 >= 0:
+        row[x - 2] = ' '
+        crow[x - 2] = None
+    # 目标格若原本是全角字符,清掉它的占位格
+    if row[x - 1] != '' and _char_width(row[x - 1]) == 2 and x < len(row):
+        row[x] = ' '
+        crow[x] = None
+    row[x - 1] = ch
+    crow[x - 1] = color
+    if w == 2:
+        row[x] = ''      # 占位格,refresh 时跳过
+        crow[x] = color
+    _dirtyRows.add(y)
 
-def drawText(x, y, text):
-    for i, ch in enumerate(text):
-        drawChar(x + i, y, ch)
+def drawText(x, y, text, color=None):
+    cx = x
+    for ch in text:
+        w = _char_width(ch)
+        if w == 0:
+            continue
+        drawChar(cx, y, ch, color)
+        cx += w
 
-def drawRect(x, y, w, h, char='#', fill=False):
+def drawRect(x, y, w, h, char='#', fill=False, color=None):
     if w <= 0 or h <= 0:
         return
     for j in range(h):
         for i in range(w):
             if fill or j in (0, h - 1) or i in (0, w - 1):
-                drawChar(x + i, y + j, char)
+                drawChar(x + i, y + j, char, color)
 
-def fillRect(x, y, w, h, char=' '):
-    drawRect(x, y, w, h, char, fill=True)
+def fillRect(x, y, w, h, char=' ', color=None):
+    drawRect(x, y, w, h, char, fill=True, color=color)
 
 def refresh():
+    global _dirtyRows
+    if not _dirtyRows:
+        return
     out = []
-    for y, line in enumerate(_screen, 1):
+    for y in sorted(_dirtyRows):
+        if y < 1 or y > _screenHeight:
+            continue
         out.append(f'\033[{y};1H')
-        out.append(''.join(line))
+        current_color = 'NONE'
+        row_chars = _screen[y - 1]
+        row_colors = _colors[y - 1]
+        for i, ch in enumerate(row_chars):
+            if ch == '':     # 全角字符占位格,跳过(前一个全角字符已占两列)
+                continue
+            c = row_colors[i]
+            if c != current_color:
+                if c is None:
+                    out.append('\033[0m')
+                else:
+                    out.append(f'\033[0;{c}m')
+                current_color = c
+            out.append(ch)
+        out.append('\033[0m')
     sys.stdout.write(''.join(out))
     sys.stdout.flush()
+    _dirtyRows = set()
 
 def cursorEcho(echo=False):
     sys.stdout.write('\033[?25h' if echo else '\033[?25l')

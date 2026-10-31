@@ -104,8 +104,8 @@ def main():
         print('Cannot get terminal size, run in a real terminal.')
         return
 
-    if es._screenWidth < W + 4 or es._screenHeight < H + 6:
-        print(f'Terminal too small: need at least {W+4}x{H+6}, got {es._screenWidth}x{es._screenHeight}')
+    if es._screenWidth < W + 3 or es._screenHeight < H + 3:
+        print(f'Terminal too small: need at least {W+3}x{H+3}, got {es._screenWidth}x{es._screenHeight}')
         return
 
     es.cursorEcho(False)

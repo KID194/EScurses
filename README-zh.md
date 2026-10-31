@@ -56,36 +56,3 @@
     它会通过稍微停顿来将帧率控制到你所传入的帧率，这对某些不想手动写大量计算的人来说是个很好的东西
 
 这基本就是全部内容了，祝你们能做出好的游戏！（虽然这个库基本没啥用）
-
----
-
-## 更新与增强（WorkBuddy AI 修复版）
-
-在保留原版 API 与风格的前提下，本分支修复了若干问题并补齐了跨平台能力：
-
-### 🐛 Bug 修复
-- **最右列丢失（off-by-one）**：原版缓冲宽度写成 `screenWidth - 1`，导致最右边一整列永远画不出来。已改为满宽 `screenWidth`，现在整屏每个格子都能用。
-- **越界崩溃**：原版 `drawChar` 直接按坐标索引缓冲，坐标超出范围会抛 `IndexError`。现已加边界保护，越界坐标静默忽略，游戏不会因此崩掉。
-- **`sleepForFrame` 忙等**：原版末尾有一段 `while` 空转循环，会短暂占满一个 CPU 核心。已改为纯 `sleep` 剩余时间，不再空转。
-- **`refresh()` 逐格绘制导致海量转义码**：原版对每个单元格都发一次 `\033[y;xH` 定位码，120x30 的终端每帧要刷约 3600 条序列，整屏被原始 ANSI 代码淹没、巨慢且易闪。已改为**按行批量**：每行只定位一次 + 整行字符串，跳过全空格行，输出量降到约「行数」级（约 1/100）。
-- **非 tty 回退**：`getTerminalSize()` 在被管道/重定向（无终端）时回退到 `80x24`，避免在奇怪环境下直接报错。
-
-### 🍎 macOS 支持
-原版只区分了 `nt` / `posix`，作者没有 Mac 设备所以没验证过。现在：
-- 明确说明 **Linux / macOS / *BSD 都走 posix 分支**（`termios` / `tty` / `select`），已在 macOS 终端与 iTerm2 的标准 ANSI 转义码下验证可用。
-- 方向键在三个平台**统一归一化**为 `UP/DOWN/LEFT/RIGHT`，跨平台写游戏不用再分别处理转义序列。
-- 新增别名 `terminalCheck()`（即原 `linuxTerminalCheck()`，行为相同），名字对 Mac 用户更友好。
-
-### 🐍 示例游戏：贪吃蛇
-仓库新增 `snake.py`，用本库写一个可在 **Windows / Linux / macOS** 终端直接跑的贪吃蛇：
-
-```bash
-cd EScurses
-python snake.py
-```
-
-- 方向键控制蛇头；`Q` 退出；吃到 `*` 加分，撞墙或咬到自己即结束。
-- 演示了 `initGame` / `drawChar` / `drawText` / `refresh` / `frameStart` / `sleepForFrame` / `exitGame` 的完整用法。
-
-> 小贴士：在真正的终端（Windows 的 cmd/PowerShell、macOS 的 Terminal/iTerm2、Linux 的任意 tty）里运行效果最好；部分 IDE 内嵌终端对 ANSI 光标控制支持不全，可能显示异常，属正常现象。
-    

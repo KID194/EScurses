@@ -1,0 +1,10 @@
+# Python 运行时自动生成的文件
+__pycache__/
+*.py[cod]
+*.pyo
+
+# 编辑器 / 系统文件
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

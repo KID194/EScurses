@@ -14,9 +14,9 @@ EScurses By KID194 (一个五年级的小学生)
 
 ## EScurses's other version (on forks)
 **There's the other version better than original! :**
-  - **EScurses-fix** (By Natsuki3462): https://github.com/Natsuki3462/EScurses-fix
-    fixed many bug on EScurses, and added some new feautures like: `drawRect()`, `drawText()`, `fillRect`, `resize()`
-  - **Escurses** (By 9178nekomc): https://github.com/9178nekomc/EScurses
+  - **EScurses-fix** (By Natsuki3462): https://github.com/Natsuki3462/EScurses-fix  
+    fixed many bug on EScurses, and added some new features like: `drawRect()`, `drawText()`, `fillRect`, `resize()`
+  - **Escurses** (By 9178nekomc): https://github.com/9178nekomc/EScurses  
     Overrided some APIs, and you also can use the original style(called 1.0 API) to code, or using the new style(called 2.0 API)
   **And other fork you also can look for it!**  
   I can't write too many fork because that's to tiring.  

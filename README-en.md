@@ -58,16 +58,15 @@ Then there are the following functions
   - **`refresh()`**
     Calling this function will iterate through the characters in the `_screen` array one by one and draw them to the screen, but not all of them, because dirty-rectangle rendering is actually used here to save performance
   - **`cursorEcho(echo)`**
-    When you pass `False` to `echo`, this hides your cursor
+    When you pass `False` to `echo`, this hides your cursor  
     If you pass `True`, the cursor is shown again
-    And the default value of `echo` is `False`
   - **`exitGame()`**
     Used to exit the game
   - **`frameStart()`**
     If you want to control the frame rate, you can try this. Call it at the beginning of each main loop. Be sure to call it at the very, very beginning, with no other code before it. Then use it together with `sleepForFrame()` to control the frame rate
   - **`sleepForFrame`**
     It controls the frame rate to the frame rate you pass in by pausing slightly, which is a great thing for some people who don't want to manually write lots of calculations
-  - **`theLifeAndEverythingAndUniverseUltimateAnswer()`**
+  - **`theLifeAndEverythingAndUniverseUltimateAnswer()`**  
     I admit its function name is really long. This is an Easter egg function; no matter how you call it, it always returns 42
 
 That's basically all the content. I wish you all the best in making great games!

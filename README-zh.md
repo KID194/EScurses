@@ -58,16 +58,15 @@
   - **`refresh()`**
     调用这个函数会将`_screen`数组里的字符一一遍历出来画到屏幕上，但不是全部都画，因为这里实际用了脏矩形渲染来节省性能
   - **`cursorEcho(echo)`**  
-    当你往`echo`里传入`False`，这会隐藏你的光标
+    当你往`echo`里传入`False`，这会隐藏你的光标  
     如果传入`True`，光标又会显示出来
-    以及`echo`的默认值为`False`
   - **`exitGame()`**  
     用于退出游戏
   - **`frameStart()`**  
     如果你想控制帧率，可以试试这个，在每次主循环的开头调用它，切记一定要是最最最开头，前面不能有其他代码，然后配合`sleepForFrame()`使用，就可以控制帧率
   - **`sleepForFrame`**  
     它会通过稍微停顿来将帧率控制到你所传入的帧率，这对某些不想手动写大量计算的人来说是个很好的东西
-  - **`theLifeAndEverythingAndUniverseUltimateAnswer()`**
+  - **`theLifeAndEverythingAndUniverseUltimateAnswer()`**  
     我承认它的函数名真的很长，这是个彩蛋函数，无论你怎么调用它都会返回42
 
 这基本就是全部内容了，祝你们能做出好的游戏！
